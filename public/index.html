@@ -1,58 +1,20 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Karyawan SPA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const token = localStorage.getItem('tokenLembur');
-        if (!token) window.location.href = '/login.html';
-
-        function parseJwt(token) {
-            try { return JSON.parse(atob(token.split('.')[1])); }
-            catch (e) { return null; }
-        }
-        const dataUser = parseJwt(token);
-    </script>
     <style>
-        .sidebar {
-            min-height: 100vh;
-            background-color: #212529;
-            color: white;
-            width: 250px;
-        }
-
-        .sidebar .nav-link {
-            color: #adb5bd;
-            margin-bottom: 5px;
-            cursor: pointer;
-        }
-
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background-color: #0d6efd;
-            color: white;
-            border-radius: 5px;
-        }
-
-        .content-area {
-            flex-grow: 1;
-            background-color: #f8f9fa;
-        }
-
-        .section-panel {
-            display: none;
-        }
-
-        .section-panel.active {
-            display: block;
-        }
+        .sidebar { min-height: 100vh; background-color: #212529; color: white; width: 250px; }
+        .sidebar .nav-link { color: #adb5bd; margin-bottom: 5px; cursor: pointer; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: #0d6efd; color: white; border-radius: 5px; }
+        .content-area { flex-grow: 1; background-color: #f8f9fa; }
+        .section-panel { display: none; }
+        .section-panel.active { display: block; }
     </style>
 </head>
-
 <body class="d-flex">
 
     <div class="sidebar p-3 d-flex flex-column shadow">
@@ -62,15 +24,9 @@
             <small class="text-success">● Online</small>
         </div>
         <ul class="nav flex-column mb-auto">
-            <li class="nav-item">
-                <a class="nav-link active" onclick="pindahMenu('dashboard', this)">📊 Dashboard</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" onclick="pindahMenu('input', this)">✍️ Input Lembur</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" onclick="pindahMenu('history', this)">🕒 History</a>
-            </li>
+            <li class="nav-item"><a class="nav-link active" onclick="pindahMenu('dashboard', this)">📊 Dashboard</a></li>
+            <li class="nav-item"><a class="nav-link" onclick="pindahMenu('input', this)">✍️ Input Lembur</a></li>
+            <li class="nav-item"><a class="nav-link" onclick="pindahMenu('history', this)">🕒 History</a></li>
         </ul>
         <button class="btn btn-danger mt-auto fw-bold" onclick="logout()">Logout Keluar</button>
     </div>
@@ -82,26 +38,17 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="card bg-primary text-white shadow-sm border-0 h-100">
-                        <div class="card-body">
-                            <h6>Total Lembur Weekday</h6>
-                            <h2 id="dashWeekday">0 Jam</h2>
-                        </div>
+                        <div class="card-body"><h6>Total Lembur Weekday</h6><h2 id="dashWeekday">0 Jam</h2></div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="card bg-warning text-dark shadow-sm border-0 h-100">
-                        <div class="card-body">
-                            <h6>Total Lembur Offday</h6>
-                            <h2 id="dashOffday">0 Jam</h2>
-                        </div>
+                        <div class="card-body"><h6>Total Lembur Offday</h6><h2 id="dashOffday">0 Jam</h2></div>
                     </div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="card bg-success text-white shadow-sm border-0 h-100">
-                        <div class="card-body">
-                            <h6>Estimasi Uang Didapat</h6>
-                            <h2 id="dashUang">Rp 0</h2>
-                        </div>
+                        <div class="card-body"><h6>Estimasi Uang Didapat</h6><h2 id="dashUang">Rp 0</h2></div>
                     </div>
                 </div>
             </div>
@@ -115,21 +62,9 @@
             <div class="card shadow-sm border-0 col-md-8 col-lg-6">
                 <div class="card-body p-4">
                     <form id="formLembur">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Tanggal Lembur</label>
-                            <input type="date" class="form-control" id="tanggalLembur" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Jenis Hari</label>
-                            <select class="form-select" id="jenisHari" required>
-                                <option value="Weekday">Hari Kerja Biasa (Weekday)</option>
-                                <option value="Offday">Hari Libur / Istirahat (Offday)</option>
-                            </select>
-                        </div>
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Durasi Lembur (Jam)</label>
-                            <input type="number" step="0.5" class="form-control" id="jamLembur" placeholder="Misal: 2.5" required>
-                        </div>
+                        <div class="mb-3"><label class="form-label fw-bold">Tanggal Lembur</label><input type="date" class="form-control" id="tanggalLembur" required></div>
+                        <div class="mb-3"><label class="form-label fw-bold">Jenis Hari</label><select class="form-select" id="jenisHari" required><option value="Weekday">Hari Kerja Biasa (Weekday)</option><option value="Offday">Hari Libur / Istirahat (Offday)</option></select></div>
+                        <div class="mb-4"><label class="form-label fw-bold">Durasi Lembur (Jam)</label><input type="number" step="0.5" class="form-control" id="jamLembur" placeholder="Misal: 2.5" required></div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan ke History</button>
                     </form>
                 </div>
@@ -141,7 +76,7 @@
                 <h3 class="m-0">Riwayat Catatan Lembur</h3>
                 <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="muatDataGlobal()">Segarkan Data</button>
             </div>
-
+            
             <div class="card shadow-sm border-0 mb-3 bg-white p-3">
                 <div class="row align-items-center">
                     <div class="col-md-3 mb-2 mb-md-0">
@@ -154,8 +89,7 @@
                     </div>
                     <div class="col-md-9">
                         <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Bulan:</label>
-                        <div id="gridBulan" class="d-flex flex-wrap">
-                            </div>
+                        <div id="gridBulan" class="d-flex flex-wrap"></div>
                     </div>
                 </div>
             </div>
@@ -164,13 +98,7 @@
                 <div class="card-body p-0 table-responsive" style="max-height: 500px;">
                     <table class="table table-hover table-striped mb-0 text-center align-middle">
                         <thead class="table-dark" style="position: sticky; top: 0;">
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Jenis</th>
-                                <th>Durasi</th>
-                                <th>Rupiah</th>
-                                <th>Opsi Koreksi</th>
-                            </tr>
+                            <tr><th>Tanggal</th><th>Jenis</th><th>Durasi</th><th>Rupiah</th><th>Opsi Koreksi</th></tr>
                         </thead>
                         <tbody id="tabelRiwayat"></tbody>
                     </table>
@@ -190,21 +118,9 @@
                 <div class="modal-body">
                     <form id="formEdit">
                         <input type="hidden" id="editId">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Tanggal</label>
-                            <input type="date" class="form-control" id="editTanggal" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Jenis</label>
-                            <select class="form-select" id="editJenis" required>
-                                <option value="Weekday">Weekday</option>
-                                <option value="Offday">Offday</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Durasi (Jam)</label>
-                            <input type="number" step="0.5" class="form-control" id="editJam" required>
-                        </div>
+                        <div class="mb-3"><label class="form-label fw-bold">Tanggal</label><input type="date" class="form-control" id="editTanggal" required></div>
+                        <div class="mb-3"><label class="form-label fw-bold">Jenis</label><select class="form-select" id="editJenis" required><option value="Weekday">Weekday</option><option value="Offday">Offday</option></select></div>
+                        <div class="mb-3"><label class="form-label fw-bold">Durasi (Jam)</label><input type="number" step="0.5" class="form-control" id="editJam" required></div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan Perubahan</button>
                     </form>
                 </div>
@@ -213,19 +129,26 @@
     </div>
 
     <script>
-        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+        // 1. Pengecekan Token Login
+        const token = localStorage.getItem('tokenLembur');
+        if (!token) window.location.href = '/login.html';
 
-        if (dataUser && dataUser.nama) {
-            document.getElementById('namaPengguna').innerText = dataUser.nama;
+        function parseJwt(token) {
+            try { return JSON.parse(atob(token.split('.')[1])); }
+            catch (e) { return null; }
         }
+        const dataUser = parseJwt(token);
+
+        if (dataUser && dataUser.nama) document.getElementById('namaPengguna').innerText = dataUser.nama;
         document.getElementById('tanggalLembur').valueAsDate = new Date();
+
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
 
         function logout() {
             localStorage.removeItem('tokenLembur');
             window.location.href = '/login.html';
         }
 
-        // --- SISTEM NAVIGASI SPA ---
         function pindahMenu(targetId, elemenKlik) {
             document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
             document.getElementById(targetId).classList.add('active');
@@ -233,8 +156,8 @@
             elemenKlik.classList.add('active');
         }
 
-        // --- LOGIKA FILTER BULAN ---
-        let bulanAktif = new Date().getMonth() + 1; // Default menampilkan bulan saat ini
+        // 2. Logika Filter Tombol Bulan
+        let bulanAktif = new Date().getMonth() + 1; 
         const namaBulan = ["Semua", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
         
         function renderTombolBulan() {
@@ -248,78 +171,79 @@
                 btn.onclick = () => { 
                     bulanAktif = i; 
                     renderTombolBulan(); 
-                    muatDataGlobal(); // Panggil data sesuai bulan baru
+                    muatDataGlobal(); 
                 };
                 grid.appendChild(btn);
             }
         }
 
-        // --- FUNGSI TARIK DATA & HITUNG RANGKUMAN (DIPERBARUI) ---
+        // 3. Menarik Data & Sistem Anti-Crash
         async function muatDataGlobal() {
             try {
-                // Ambil nilai dari alat filter
                 const tahun = document.getElementById('filterTahun').value;
                 let url = `/api/riwayat-lembur?tahun=${tahun}`;
                 if (bulanAktif !== 0) url += `&bulan=${bulanAktif}`;
 
-                const response = await fetch(url, {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
+                const response = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
                 const data = await response.json();
+
+                // Proteksi jika sesi habis / server error
+                if (!response.ok) {
+                    if (response.status === 403 || response.status === 401) {
+                        alert("Sesi login Anda telah berakhir. Silakan login ulang.");
+                        logout();
+                        return;
+                    }
+                    console.error("Error server:", data.pesan);
+                    return;
+                }
 
                 let totalJamWeekday = 0;
                 let totalJamOffday = 0;
                 let totalUang = 0;
-
                 const tbody = document.getElementById('tabelRiwayat');
                 tbody.innerHTML = '';
 
-                if (data.length === 0) {
+                // Proteksi jika data kosong
+                if (!Array.isArray(data) || data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted fw-bold">Belum ada data lembur di periode ini.</td></tr>';
+                } else {
+                    data.forEach(item => {
+                        if (item.jenis_hari === 'Weekday') totalJamWeekday += parseFloat(item.jam_lembur);
+                        if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
+                        totalUang += parseFloat(item.total_uang_lembur);
+
+                        const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; 
+                        const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="fw-bold">${formatTgl}</td>
+                            <td><span class="badge ${item.jenis_hari === 'Weekday' ? 'bg-secondary' : 'bg-warning text-dark'}">${item.jenis_hari}</span></td>
+                            <td>${item.jam_lembur}</td>
+                            <td class="text-success fw-bold">${formatRupiah(item.total_uang_lembur)}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary me-1" onclick="bukaModalEdit(${item.id}, '${tgl}', '${item.jenis_hari}', ${item.jam_lembur})">Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="hapusData(${item.id})">Hapus</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
                 }
 
-                data.forEach(item => {
-                    // Hitung akumulasi untuk Dashboard
-                    if (item.jenis_hari === 'Weekday') totalJamWeekday += parseFloat(item.jam_lembur);
-                    if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
-                    totalUang += parseFloat(item.total_uang_lembur);
-
-                    // Buat baris tabel untuk History
-                    const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; 
-                    const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="fw-bold">${formatTgl}</td>
-                        <td><span class="badge ${item.jenis_hari === 'Weekday' ? 'bg-secondary' : 'bg-warning text-dark'}">${item.jenis_hari}</span></td>
-                        <td>${item.jam_lembur}</td>
-                        <td class="text-success fw-bold">${formatRupiah(item.total_uang_lembur)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary me-1" onclick="bukaModalEdit(${item.id}, '${tgl}', '${item.jenis_hari}', ${item.jam_lembur})">Edit</button>
-                            <button class="btn btn-sm btn-danger" onclick="hapusData(${item.id})">Hapus</button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                // Cetak hasil akumulasi ke Dashboard
                 document.getElementById('dashWeekday').innerText = totalJamWeekday + " Jam";
                 document.getElementById('dashOffday').innerText = totalJamOffday + " Jam";
                 document.getElementById('dashUang').innerText = formatRupiah(totalUang);
 
-            } catch (error) {
-                console.error("Gagal menarik data", error);
-            }
+            } catch (error) { console.error("Gagal menarik data", error); }
         }
 
-        // --- FUNGSI HAPUS ---
         async function hapusData(id) {
             if (!confirm("Yakin hapus data ini?")) return;
             const res = await fetch('/api/lembur/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
             if (res.ok) muatDataGlobal();
         }
 
-        // --- FUNGSI SIMPAN BARU ---
         document.getElementById('formLembur').addEventListener('submit', async function (e) {
             e.preventDefault();
             const res = await fetch('/api/hitung-lembur', {
@@ -334,16 +258,13 @@
             if (res.ok) {
                 document.getElementById('jamLembur').value = '';
                 alert("Data berhasil disimpan!");
-                
-                // Pindah ke tab history untuk melihat hasil
-                document.querySelector('.nav-link[onclick="pindahMenu(\\'history\\', this)"]').click();
+                // Pindah otomatis ke tab history
+                document.querySelector('a[onclick*="history"]').click();
                 muatDataGlobal(); 
             }
         });
 
-        // --- FUNGSI EDIT ---
         const modalEdit = new bootstrap.Modal(document.getElementById('modalEdit'));
-
         function bukaModalEdit(id, tanggal, jenis, jam) {
             document.getElementById('editId').value = id;
             document.getElementById('editTanggal').value = tanggal;
@@ -355,7 +276,6 @@
         document.getElementById('formEdit').addEventListener('submit', async function (e) {
             e.preventDefault();
             const id = document.getElementById('editId').value;
-
             const res = await fetch('/api/lembur/' + id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -365,18 +285,14 @@
                     jamLembur: parseFloat(document.getElementById('editJam').value)
                 })
             });
-
             if (res.ok) {
                 modalEdit.hide(); 
                 muatDataGlobal(); 
-            } else {
-                alert("Gagal memperbarui data.");
-            }
+            } else { alert("Gagal memperbarui data."); }
         });
 
-        // --- INISIALISASI SAAT HALAMAN DIBUKA ---
+        // 4. Inisialisasi Otomatis Saat Web Dibuka
         window.onload = () => {
-            // Set tahun ke saat ini secara otomatis
             document.getElementById('filterTahun').value = new Date().getFullYear();
             renderTombolBulan();
             muatDataGlobal();
