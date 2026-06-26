@@ -18,7 +18,6 @@
         const dataUser = parseJwt(token);
     </script>
     <style>
-        /* Gaya khusus untuk bilah sisi (sidebar) */
         .sidebar {
             min-height: 100vh;
             background-color: #212529;
@@ -48,12 +47,9 @@
             display: none;
         }
 
-        /* Semua panel disembunyikan secara default */
         .section-panel.active {
             display: block;
         }
-
-        /* Hanya panel aktif yang muncul */
     </style>
 </head>
 
@@ -110,7 +106,7 @@
                 </div>
             </div>
             <div class="alert alert-info mt-3 border-0 shadow-sm">
-                💡 Rangkuman data ini diakumulasikan dari catatan <strong>History</strong> Anda.
+                💡 Rangkuman data ini diakumulasikan dari catatan <strong>History</strong> pada periode yang Anda pilih.
             </div>
         </div>
 
@@ -132,8 +128,7 @@
                         </div>
                         <div class="mb-4">
                             <label class="form-label fw-bold">Durasi Lembur (Jam)</label>
-                            <input type="number" step="0.5" class="form-control" id="jamLembur" placeholder="Misal: 2.5"
-                                required>
+                            <input type="number" step="0.5" class="form-control" id="jamLembur" placeholder="Misal: 2.5" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan ke History</button>
                     </form>
@@ -142,15 +137,33 @@
         </div>
 
         <div id="history" class="section-panel">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
                 <h3 class="m-0">Riwayat Catatan Lembur</h3>
-                <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="muatDataGlobal()">Segarkan
-                    Data</button>
+                <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="muatDataGlobal()">Segarkan Data</button>
             </div>
+
+            <div class="card shadow-sm border-0 mb-3 bg-white p-3">
+                <div class="row align-items-center">
+                    <div class="col-md-3 mb-2 mb-md-0">
+                        <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Tahun:</label>
+                        <select id="filterTahun" class="form-select border-primary" onchange="muatDataGlobal()">
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
+                    <div class="col-md-9">
+                        <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Bulan:</label>
+                        <div id="gridBulan" class="d-flex flex-wrap">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card shadow-sm border-0">
-                <div class="card-body p-0 table-responsive">
-                    <table class="table table-hover mb-0 text-center align-middle">
-                        <thead class="table-light">
+                <div class="card-body p-0 table-responsive" style="max-height: 500px;">
+                    <table class="table table-hover table-striped mb-0 text-center align-middle">
+                        <thead class="table-dark" style="position: sticky; top: 0;">
                             <tr>
                                 <th>Tanggal</th>
                                 <th>Jenis</th>
@@ -171,7 +184,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-warning">
-                    <h5 class="modal-title">Edit Catatan Lembur</h5>
+                    <h5 class="modal-title fw-bold">Edit Catatan Lembur</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -192,7 +205,7 @@
                             <label class="form-label fw-bold">Durasi (Jam)</label>
                             <input type="number" step="0.5" class="form-control" id="editJam" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan Perubahan</button>
                     </form>
                 </div>
             </div>
@@ -214,20 +227,42 @@
 
         // --- SISTEM NAVIGASI SPA ---
         function pindahMenu(targetId, elemenKlik) {
-            // Sembunyikan semua panel
             document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
-            // Tampilkan panel target
             document.getElementById(targetId).classList.add('active');
-
-            // Ubah gaya warna tombol sidebar yang aktif
             document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
             elemenKlik.classList.add('active');
         }
 
-        // --- FUNGSI TARIK DATA & HITUNG RANGKUMAN ---
+        // --- LOGIKA FILTER BULAN ---
+        let bulanAktif = new Date().getMonth() + 1; // Default menampilkan bulan saat ini
+        const namaBulan = ["Semua", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+        
+        function renderTombolBulan() {
+            const grid = document.getElementById('gridBulan');
+            grid.innerHTML = '';
+            for (let i = 0; i <= 12; i++) {
+                const btn = document.createElement('button');
+                btn.className = `btn btn-sm fw-bold ${i === bulanAktif ? 'btn-primary' : 'btn-outline-primary'}`;
+                btn.innerText = namaBulan[i];
+                btn.style.margin = '2px';
+                btn.onclick = () => { 
+                    bulanAktif = i; 
+                    renderTombolBulan(); 
+                    muatDataGlobal(); // Panggil data sesuai bulan baru
+                };
+                grid.appendChild(btn);
+            }
+        }
+
+        // --- FUNGSI TARIK DATA & HITUNG RANGKUMAN (DIPERBARUI) ---
         async function muatDataGlobal() {
             try {
-                const response = await fetch('/api/riwayat-lembur', {
+                // Ambil nilai dari alat filter
+                const tahun = document.getElementById('filterTahun').value;
+                let url = `/api/riwayat-lembur?tahun=${tahun}`;
+                if (bulanAktif !== 0) url += `&bulan=${bulanAktif}`;
+
+                const response = await fetch(url, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await response.json();
@@ -240,7 +275,7 @@
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted">Belum ada data lembur.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted fw-bold">Belum ada data lembur di periode ini.</td></tr>';
                 }
 
                 data.forEach(item => {
@@ -249,22 +284,8 @@
                     if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
                     totalUang += parseFloat(item.total_uang_lembur);
 
-                    <!-- ALAT FILTER WAKTU -->
-                    <div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
-                        <label style="font-weight: bold; margin-right: 10px;">Tahun:</label>
-                        <select id="filterTahun" onchange="terapkanFilter()" style="padding: 5px; border-radius: 4px;">
-                            <option value="2026">2026</option>
-                            <option value="2025">2025</option>
-                        </select>
-                    
-                        <label style="font-weight: bold; margin-left: 20px; margin-right: 10px;">Bulan:</label>
-                        <div id="gridBulan" style="display: inline-block;">
-                            <!-- Tombol bulan akan otomatis terisi oleh JavaScript -->
-                        </div>
-                    </div>
-
                     // Buat baris tabel untuk History
-                    const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; // Format standar untuk input date
+                    const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; 
                     const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
                     const tr = document.createElement('tr');
@@ -313,20 +334,21 @@
             if (res.ok) {
                 document.getElementById('jamLembur').value = '';
                 alert("Data berhasil disimpan!");
-                muatDataGlobal(); // Update dashboard & history secara instan
+                
+                // Pindah ke tab history untuk melihat hasil
+                document.querySelector('.nav-link[onclick="pindahMenu(\\'history\\', this)"]').click();
+                muatDataGlobal(); 
             }
         });
 
-        // --- FUNGSI EDIT (MEMBUKA MODAL & UPDATE KE SERVER) ---
+        // --- FUNGSI EDIT ---
         const modalEdit = new bootstrap.Modal(document.getElementById('modalEdit'));
 
         function bukaModalEdit(id, tanggal, jenis, jam) {
-            // Isi data lama ke dalam form modal
             document.getElementById('editId').value = id;
             document.getElementById('editTanggal').value = tanggal;
             document.getElementById('editJenis').value = jenis;
             document.getElementById('editJam').value = jam;
-            // Tampilkan modal
             modalEdit.show();
         }
 
@@ -345,16 +367,20 @@
             });
 
             if (res.ok) {
-                modalEdit.hide(); // Tutup modal
-                muatDataGlobal(); // Perbarui seluruh dasbor dan tabel
+                modalEdit.hide(); 
+                muatDataGlobal(); 
             } else {
                 alert("Gagal memperbarui data.");
             }
         });
 
-        // Muat data saat halaman pertama kali dibuka
-        window.onload = muatDataGlobal;
+        // --- INISIALISASI SAAT HALAMAN DIBUKA ---
+        window.onload = () => {
+            // Set tahun ke saat ini secara otomatis
+            document.getElementById('filterTahun').value = new Date().getFullYear();
+            renderTombolBulan();
+            muatDataGlobal();
+        };
     </script>
 </body>
-
 </html>
