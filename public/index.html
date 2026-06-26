@@ -249,6 +249,20 @@
                     if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
                     totalUang += parseFloat(item.total_uang_lembur);
 
+                    <!-- ALAT FILTER WAKTU -->
+                    <div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                        <label style="font-weight: bold; margin-right: 10px;">Tahun:</label>
+                        <select id="filterTahun" onchange="terapkanFilter()" style="padding: 5px; border-radius: 4px;">
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    
+                        <label style="font-weight: bold; margin-left: 20px; margin-right: 10px;">Bulan:</label>
+                        <div id="gridBulan" style="display: inline-block;">
+                            <!-- Tombol bulan akan otomatis terisi oleh JavaScript -->
+                        </div>
+                    </div>
+
                     // Buat baris tabel untuk History
                     const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; // Format standar untuk input date
                     const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
