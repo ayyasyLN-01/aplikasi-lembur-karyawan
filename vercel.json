@@ -1,5 +1,13 @@
 {
+  "version": 2,
+  "builds": [
+    { "src": "server.js", "use": "@vercel/node" }
+  ],
   "redirects": [
     { "source": "/", "destination": "/login.html", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server.js" },
+    { "source": "/(.*)", "destination": "/public/$1" }
   ]
 }
