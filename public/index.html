@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Karyawan SPA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const token = localStorage.getItem('tokenLembur');
+        if (!token) window.location.href = '/login.html';
+
+        function parseJwt(token) {
+            try { return JSON.parse(atob(token.split('.')[1])); }
+            catch (e) { return null; }
+        }
+        const dataUser = parseJwt(token);
+    </script>
+    <style>
+        /* Gaya khusus untuk bilah sisi (sidebar) */
+        .sidebar {
+            min-height: 100vh;
+            background-color: #212529;
+            color: white;
+            width: 250px;
+        }
+
+        .sidebar .nav-link {
+            color: #adb5bd;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            background-color: #f8f9fa;
+        }
+
+        .section-panel {
+            display: none;
+        }
+
+        /* Semua panel disembunyikan secara default */
+        .section-panel.active {
+            display: block;
+        }
+
+        /* Hanya panel aktif yang muncul */
+    </style>
+</head>
+
+<body class="d-flex">
+
+    <div class="sidebar p-3 d-flex flex-column shadow">
+        <h4 class="text-center mb-4 border-bottom pb-3">Portal Lembur</h4>
+        <div class="mb-4 text-center">
+            <h6 class="text-light m-0" id="namaPengguna">Karyawan</h6>
+            <small class="text-success">● Online</small>
+        </div>
+        <ul class="nav flex-column mb-auto">
+            <li class="nav-item">
+                <a class="nav-link active" onclick="pindahMenu('dashboard', this)">📊 Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="pindahMenu('input', this)">✍️ Input Lembur</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" onclick="pindahMenu('history', this)">🕒 History</a>
+            </li>
+        </ul>
+        <button class="btn btn-danger mt-auto fw-bold" onclick="logout()">Logout Keluar</button>
+    </div>
+
+    <div class="content-area p-4">
+
+        <div id="dashboard" class="section-panel active">
+            <h3 class="mb-4">Rangkuman Lembur Anda</h3>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-primary text-white shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <h6>Total Lembur Weekday</h6>
+                            <h2 id="dashWeekday">0 Jam</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-warning text-dark shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <h6>Total Lembur Offday</h6>
+                            <h2 id="dashOffday">0 Jam</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-success text-white shadow-sm border-0 h-100">
+                        <div class="card-body">
+                            <h6>Estimasi Uang Didapat</h6>
+                            <h2 id="dashUang">Rp 0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="alert alert-info mt-3 border-0 shadow-sm">
+                💡 Rangkuman data ini diakumulasikan dari catatan <strong>History</strong> Anda.
+            </div>
+        </div>
+
+        <div id="input" class="section-panel">
+            <h3 class="mb-4">Kalkulator & Input Lembur</h3>
+            <div class="card shadow-sm border-0 col-md-8 col-lg-6">
+                <div class="card-body p-4">
+                    <form id="formLembur">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tanggal Lembur</label>
+                            <input type="date" class="form-control" id="tanggalLembur" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Jenis Hari</label>
+                            <select class="form-select" id="jenisHari" required>
+                                <option value="Weekday">Hari Kerja Biasa (Weekday)</option>
+                                <option value="Offday">Hari Libur / Istirahat (Offday)</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Durasi Lembur (Jam)</label>
+                            <input type="number" step="0.5" class="form-control" id="jamLembur" placeholder="Misal: 2.5"
+                                required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Simpan ke History</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="history" class="section-panel">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="m-0">Riwayat Catatan Lembur</h3>
+                <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="muatDataGlobal()">Segarkan
+                    Data</button>
+            </div>
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover mb-0 text-center align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Jenis</th>
+                                <th>Durasi</th>
+                                <th>Rupiah</th>
+                                <th>Opsi Koreksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRiwayat"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalEdit" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Edit Catatan Lembur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEdit">
+                        <input type="hidden" id="editId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tanggal</label>
+                            <input type="date" class="form-control" id="editTanggal" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Jenis</label>
+                            <select class="form-select" id="editJenis" required>
+                                <option value="Weekday">Weekday</option>
+                                <option value="Offday">Offday</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Durasi (Jam)</label>
+                            <input type="number" step="0.5" class="form-control" id="editJam" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(angka);
+
+        if (dataUser && dataUser.nama) {
+            document.getElementById('namaPengguna').innerText = dataUser.nama;
+        }
+        document.getElementById('tanggalLembur').valueAsDate = new Date();
+
+        function logout() {
+            localStorage.removeItem('tokenLembur');
+            window.location.href = '/login.html';
+        }
+
+        // --- SISTEM NAVIGASI SPA ---
+        function pindahMenu(targetId, elemenKlik) {
+            // Sembunyikan semua panel
+            document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
+            // Tampilkan panel target
+            document.getElementById(targetId).classList.add('active');
+
+            // Ubah gaya warna tombol sidebar yang aktif
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
+            elemenKlik.classList.add('active');
+        }
+
+        // --- FUNGSI TARIK DATA & HITUNG RANGKUMAN ---
+        async function muatDataGlobal() {
+            try {
+                const response = await fetch('/api/riwayat-lembur', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const data = await response.json();
+
+                let totalJamWeekday = 0;
+                let totalJamOffday = 0;
+                let totalUang = 0;
+
+                const tbody = document.getElementById('tabelRiwayat');
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted">Belum ada data lembur.</td></tr>';
+                }
+
+                data.forEach(item => {
+                    // Hitung akumulasi untuk Dashboard
+                    if (item.jenis_hari === 'Weekday') totalJamWeekday += parseFloat(item.jam_lembur);
+                    if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
+                    totalUang += parseFloat(item.total_uang_lembur);
+
+                    // Buat baris tabel untuk History
+                    const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; // Format standar untuk input date
+                    const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="fw-bold">${formatTgl}</td>
+                        <td><span class="badge ${item.jenis_hari === 'Weekday' ? 'bg-secondary' : 'bg-warning text-dark'}">${item.jenis_hari}</span></td>
+                        <td>${item.jam_lembur}</td>
+                        <td class="text-success fw-bold">${formatRupiah(item.total_uang_lembur)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" onclick="bukaModalEdit(${item.id}, '${tgl}', '${item.jenis_hari}', ${item.jam_lembur})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="hapusData(${item.id})">Hapus</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Cetak hasil akumulasi ke Dashboard
+                document.getElementById('dashWeekday').innerText = totalJamWeekday + " Jam";
+                document.getElementById('dashOffday').innerText = totalJamOffday + " Jam";
+                document.getElementById('dashUang').innerText = formatRupiah(totalUang);
+
+            } catch (error) {
+                console.error("Gagal menarik data", error);
+            }
+        }
+
+        // --- FUNGSI HAPUS ---
+        async function hapusData(id) {
+            if (!confirm("Yakin hapus data ini?")) return;
+            const res = await fetch('/api/lembur/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+            if (res.ok) muatDataGlobal();
+        }
+
+        // --- FUNGSI SIMPAN BARU ---
+        document.getElementById('formLembur').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const res = await fetch('/api/hitung-lembur', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({
+                    tanggalLembur: document.getElementById('tanggalLembur').value,
+                    jenisHari: document.getElementById('jenisHari').value,
+                    jamLembur: parseFloat(document.getElementById('jamLembur').value)
+                })
+            });
+            if (res.ok) {
+                document.getElementById('jamLembur').value = '';
+                alert("Data berhasil disimpan!");
+                muatDataGlobal(); // Update dashboard & history secara instan
+            }
+        });
+
+        // --- FUNGSI EDIT (MEMBUKA MODAL & UPDATE KE SERVER) ---
+        const modalEdit = new bootstrap.Modal(document.getElementById('modalEdit'));
+
+        function bukaModalEdit(id, tanggal, jenis, jam) {
+            // Isi data lama ke dalam form modal
+            document.getElementById('editId').value = id;
+            document.getElementById('editTanggal').value = tanggal;
+            document.getElementById('editJenis').value = jenis;
+            document.getElementById('editJam').value = jam;
+            // Tampilkan modal
+            modalEdit.show();
+        }
+
+        document.getElementById('formEdit').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+
+            const res = await fetch('/api/lembur/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({
+                    tanggalLembur: document.getElementById('editTanggal').value,
+                    jenisHari: document.getElementById('editJenis').value,
+                    jamLembur: parseFloat(document.getElementById('editJam').value)
+                })
+            });
+
+            if (res.ok) {
+                modalEdit.hide(); // Tutup modal
+                muatDataGlobal(); // Perbarui seluruh dasbor dan tabel
+            } else {
+                alert("Gagal memperbarui data.");
+            }
+        });
+
+        // Muat data saat halaman pertama kali dibuka
+        window.onload = muatDataGlobal;
+    </script>
+</body>
+
+</html>

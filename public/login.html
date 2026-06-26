@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Administrator - Kalkulator Lembur</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-secondary">
+    <div class="container mt-5">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-4">
+                <div class="card shadow border-0">
+                    <div class="card-body p-4">
+                        <h3 class="text-center mb-4">Login</h3>
+                        <form id="formLogin">
+                            <div class="mb-3">
+                                <label class="form-label">Username</label>
+                                <input type="text" id="username" class="form-control" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Password</label>
+                                <input type="password" id="password" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Masuk ke Sistem</button>
+                        </form>
+                        <div class="mt-4 text-center">
+                            <!-- <span class="text-black-50">Karyawan baru? </span> -->
+                            <button onclick="window.location.href='/register.html'" class="fw-bold btn btn-success">Buat
+                                Akun</button>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center text-white mt-3" style="font-size: 0.8rem;">
+                    Hanya untuk akses administrator Ayyasy.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Simpan Tiket
+                    localStorage.setItem('tokenLembur', data.token);
+
+                    // Sortir arah halaman berdasarkan peran
+                    if (data.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        window.location.href = '/index.html';
+                    }
+                } else {
+                    alert(data.pesan);
+                }
+            } catch (err) {
+                alert("Gagal terhubung ke server.");
+            }
+        });
+    </script>
+</body>
+
+</html>
