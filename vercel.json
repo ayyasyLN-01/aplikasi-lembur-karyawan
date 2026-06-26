@@ -1,7 +1,4 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/server.js" }
-  ],
   "redirects": [
     { "source": "/", "destination": "/login.html", "permanent": false }
   ]
