@@ -13,6 +13,13 @@
         .content-area { flex-grow: 1; background-color: #f8f9fa; }
         .section-panel { display: none; }
         .section-panel.active { display: block; }
+        @media (max-width: 576px) {
+            .table td, .table th {
+                font-size: 0.8rem;
+                padding: 5px !important;
+            }
+            .btn-sm { padding: 2px 5px; font-size: 0.7rem; }
+        }
     </style>
 </head>
 <body class="d-flex">
