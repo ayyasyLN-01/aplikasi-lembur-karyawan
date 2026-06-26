@@ -2,8 +2,6 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const app = express();
-// const port = 3000;
-// Render akan secara otomatis memberikan "Port" rahasia untuk aplikasi Anda.
 const port = process.env.PORT || 3000;
 const db = require('./db');
 
@@ -97,7 +95,6 @@ app.post('/api/hitung-lembur', verifikasiToken, async (req, res) => {
             return res.status(400).json({ pesan: "Data tidak valid!" });
         }
 
-        // Ambil gaji pokok dari database profil
         const userQuery = await db.query('SELECT gaji_pokok FROM profil_karyawan WHERE id = $1', [req.user.id]);
         if (userQuery.rows.length === 0) return res.status(404).json({ pesan: "Karyawan tidak ditemukan." });
 
@@ -123,11 +120,28 @@ app.post('/api/hitung-lembur', verifikasiToken, async (req, res) => {
     } catch (error) { res.status(500).json({ pesan: "Error server." }); }
 });
 
-// 2. Tarik Riwayat Lembur Sendiri
+// 2. Tarik Riwayat Lembur Sendiri (SUDAH DIPERBAIKI DENGAN FILTER WAKTU)
 app.get('/api/riwayat-lembur', verifikasiToken, async (req, res) => {
     try {
-        const queryTeks = `SELECT * FROM lembur_karyawan WHERE user_id = $1 ORDER BY tanggal_lembur DESC`;
-        const hasil = await db.query(queryTeks, [req.user.id]);
+        const { tahun, bulan } = req.query; // Menangkap filter dari frontend
+        
+        let queryTeks = `SELECT * FROM lembur_karyawan WHERE user_id = $1`;
+        let params = [req.user.id];
+
+        // Menyuntikkan filter ke dalam SQL jika parameter dikirim
+        if (tahun) {
+            queryTeks += ` AND EXTRACT(YEAR FROM tanggal_lembur) = $${params.length + 1}`;
+            params.push(tahun);
+        }
+        
+        if (bulan) {
+            queryTeks += ` AND EXTRACT(MONTH FROM tanggal_lembur) = $${params.length + 1}`;
+            params.push(bulan);
+        }
+
+        queryTeks += ` ORDER BY tanggal_lembur DESC`;
+        
+        const hasil = await db.query(queryTeks, params);
         res.json(hasil.rows);
     } catch (error) { res.status(500).json({ pesan: "Gagal mengambil data." }); }
 });
@@ -221,7 +235,8 @@ app.get('/api/admin/semua-lembur', verifikasiToken, async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Server berjalan di http://localhost:${port}`);
+    console.log(`Server berjalan di port:${port}`);
 });
-// Tambahkan baris ini di paling bawah file server.js
+
+// Wajib untuk Vercel
 module.exports = app;
