@@ -1,18 +1,19 @@
 /* --- GAYA TOMBOL DINAMIS (ANTI BOCOR) --- */
 .btn-dinamis {
     display: block;
-    width: 70%;         /* 👈 1. UBAH LEBAR DI SINI */
-    margin: 0 auto; */ /* 👈 (Opsional) Aktifkan ini agar tombol ke tengah jika width dikecilkan
+    width: 200px; /* <--- Pastikan ada titik koma di sini! */
+    margin: 0 auto; /* <--- Pastikan ada titik koma di sini! */
     
     transition: all 0.2s ease-in;
-    position: relative !important;
-    overflow: hidden !important;
+    
+    /* DUA BARIS INI ADALAH KUNCI AGAR TIDAK BOCOR: */
+    position: relative !important; /* Sebagai "Jangkar" animasi */
+    overflow: hidden !important;   /* Sebagai "Gunting" animasi yang keluar batas */
+    
     z-index: 1;
     color: #090909 !important;
-    
-    padding: 0.7em 1.7em; /* 👈 2. UBAH TINGGI/TEBAL DI SINI */
-    font-size: 18px;      /* 👈 3. UBAH UKURAN HURUF DI SINI */
-    
+    padding: 0.7em 1.7em;
+    font-size: 18px;
     cursor: pointer;
     border-radius: 0.5em;
     background: #e8e8e8 !important;
