@@ -6,6 +6,9 @@
     <title>Portal Karyawan SPA</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         .sidebar { min-height: 100vh; background-color: #212529; color: white; width: 250px; }
         .sidebar .nav-link { color: #adb5bd; margin-bottom: 5px; cursor: pointer; }
@@ -13,13 +16,14 @@
         .content-area { flex-grow: 1; background-color: #f8f9fa; }
         .section-panel { display: none; }
         .section-panel.active { display: block; }
+        
+        /* CSS Responsif untuk HP */
         @media (max-width: 576px) {
-            .table td, .table th {
-                font-size: 0.8rem;
-                padding: 5px !important;
-            }
+            .table td, .table th { font-size: 0.8rem; padding: 5px !important; }
             .btn-sm { padding: 2px 5px; font-size: 0.7rem; }
+            .chart-container { height: 250px !important; }
         }
+        .chart-container { position: relative; height: 350px; width: 100%; }
     </style>
 </head>
 <body class="d-flex">
@@ -40,9 +44,26 @@
 
     <div class="content-area p-4">
 
+        <div id="globalFilter" class="card shadow-sm border-0 mb-4 bg-white p-3">
+            <div class="row align-items-center">
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Tahun:</label>
+                    <select id="filterTahun" class="form-select border-primary" onchange="muatDataGlobal()">
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2027">2027</option>
+                    </select>
+                </div>
+                <div class="col-md-9">
+                    <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Bulan:</label>
+                    <div id="gridBulan" class="d-flex flex-wrap"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="dashboard" class="section-panel active">
-            <h3 class="mb-4">Rangkuman Lembur Anda</h3>
-            <div class="row">
+            <h3 class="mb-4">Statistik Lembur Bulanan</h3>
+            <div class="row mb-4">
                 <div class="col-md-4 mb-3">
                     <div class="card bg-primary text-white shadow-sm border-0 h-100">
                         <div class="card-body"><h6>Total Lembur Weekday</h6><h2 id="dashWeekday">0 Jam</h2></div>
@@ -59,8 +80,14 @@
                     </div>
                 </div>
             </div>
-            <div class="alert alert-info mt-3 border-0 shadow-sm">
-                💡 Rangkuman data ini diakumulasikan dari catatan <strong>History</strong> pada periode yang Anda pilih.
+            
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-muted fw-bold mb-3">Grafik Intensitas Lembur</h5>
+                    <div class="chart-container">
+                        <canvas id="grafikLembur"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -80,32 +107,15 @@
 
         <div id="history" class="section-panel">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3 class="m-0">Riwayat Catatan Lembur</h3>
+                <h3 class="m-0">Tabel Riwayat Lembur</h3>
                 <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="muatDataGlobal()">Segarkan Data</button>
             </div>
             
-            <div class="card shadow-sm border-0 mb-3 bg-white p-3">
-                <div class="row align-items-center">
-                    <div class="col-md-3 mb-2 mb-md-0">
-                        <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Tahun:</label>
-                        <select id="filterTahun" class="form-select border-primary" onchange="muatDataGlobal()">
-                            <option value="2026">2026</option>
-                            <option value="2025">2025</option>
-                            <option value="2027">2027</option>
-                        </select>
-                    </div>
-                    <div class="col-md-9">
-                        <label class="fw-bold text-muted mb-1" style="font-size: 0.9rem;">Pilih Bulan:</label>
-                        <div id="gridBulan" class="d-flex flex-wrap"></div>
-                    </div>
-                </div>
-            </div>
-
             <div class="card shadow-sm border-0">
                 <div class="card-body p-0 table-responsive" style="max-height: 500px;">
                     <table class="table table-hover table-striped mb-0 text-center align-middle">
                         <thead class="table-dark" style="position: sticky; top: 0;">
-                            <tr><th>Tanggal</th><th>Jenis</th><th>Durasi</th><th>Rupiah</th><th>Opsi Koreksi</th></tr>
+                            <tr><th>Tanggal</th><th>Jenis</th><th>Durasi</th><th>Rupiah</th><th>Opsi</th></tr>
                         </thead>
                         <tbody id="tabelRiwayat"></tbody>
                     </table>
@@ -136,7 +146,7 @@
     </div>
 
     <script>
-        // 1. Pengecekan Token Login
+        // --- CEK SESI LOGIN ---
         const token = localStorage.getItem('tokenLembur');
         if (!token) window.location.href = '/login.html';
 
@@ -156,14 +166,20 @@
             window.location.href = '/login.html';
         }
 
+        // --- SISTEM NAVIGASI SPA & TOGGLE FILTER ---
         function pindahMenu(targetId, elemenKlik) {
             document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
             document.getElementById(targetId).classList.add('active');
             document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
             elemenKlik.classList.add('active');
+
+            // Sembunyikan Filter jika masuk ke halaman Input
+            const globalFilter = document.getElementById('globalFilter');
+            if (targetId === 'input') globalFilter.style.display = 'none';
+            else globalFilter.style.display = 'block';
         }
 
-        // 2. Logika Filter Tombol Bulan
+        // --- FILTER BULAN ---
         let bulanAktif = new Date().getMonth() + 1; 
         const namaBulan = ["Semua", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
         
@@ -184,7 +200,39 @@
             }
         }
 
-        // 3. Menarik Data & Sistem Anti-Crash
+        // --- GRAFIK CHART.JS ---
+        let chartInstance = null;
+        function renderGrafik(dataArray) {
+            const ctx = document.getElementById('grafikLembur').getContext('2d');
+            
+            // Balik urutan agar tanggal terkecil ada di kiri grafik
+            const dataReverse = [...dataArray].reverse();
+            
+            const labelTanggal = dataReverse.map(item => new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
+            const nilaiJam = dataReverse.map(item => parseFloat(item.jam_lembur));
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelTanggal,
+                    datasets: [{
+                        label: 'Durasi Lembur (Jam)',
+                        data: nilaiJam,
+                        backgroundColor: '#0d6efd',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // --- TARIK DATA, TABEL, & RATA-RATA ---
         async function muatDataGlobal() {
             try {
                 const tahun = document.getElementById('filterTahun').value;
@@ -194,26 +242,21 @@
                 const response = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
                 const data = await response.json();
 
-                // Proteksi jika sesi habis / server error
                 if (!response.ok) {
                     if (response.status === 403 || response.status === 401) {
                         alert("Sesi login Anda telah berakhir. Silakan login ulang.");
-                        logout();
-                        return;
+                        logout(); return;
                     }
-                    console.error("Error server:", data.pesan);
                     return;
                 }
 
-                let totalJamWeekday = 0;
-                let totalJamOffday = 0;
-                let totalUang = 0;
+                let totalJamWeekday = 0; let totalJamOffday = 0; let totalUang = 0;
                 const tbody = document.getElementById('tabelRiwayat');
                 tbody.innerHTML = '';
 
-                // Proteksi jika data kosong
                 if (!Array.isArray(data) || data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted fw-bold">Belum ada data lembur di periode ini.</td></tr>';
+                    renderGrafik([]); // Kosongkan grafik
                 } else {
                     data.forEach(item => {
                         if (item.jenis_hari === 'Weekday') totalJamWeekday += parseFloat(item.jam_lembur);
@@ -236,8 +279,31 @@
                         `;
                         tbody.appendChild(tr);
                     });
+
+                    // LOGIKA RATA-RATA PRESISI (Hanya memproses set data numerik yang bernilai)
+                    const dataValid = data.filter(item => parseFloat(item.jam_lembur) > 0);
+                    const jumlahData = dataValid.length;
+                    
+                    if (jumlahData > 0) {
+                        const rataJam = (totalJamWeekday + totalJamOffday) / jumlahData;
+                        const rataUang = totalUang / jumlahData;
+                        
+                        const trAvg = document.createElement('tr');
+                        trAvg.className = "table-info fw-bold";
+                        trAvg.innerHTML = `
+                            <td colspan="2" class="text-end">📈 Rata-rata:</td>
+                            <td>${rataJam.toFixed(1)} Jam</td>
+                            <td class="text-success">${formatRupiah(rataUang)}</td>
+                            <td></td>
+                        `;
+                        tbody.appendChild(trAvg);
+                    }
+
+                    // Render Data ke Grafik
+                    renderGrafik(data);
                 }
 
+                // Update Angka di Dashboard
                 document.getElementById('dashWeekday').innerText = totalJamWeekday + " Jam";
                 document.getElementById('dashOffday').innerText = totalJamOffday + " Jam";
                 document.getElementById('dashUang').innerText = formatRupiah(totalUang);
@@ -245,6 +311,7 @@
             } catch (error) { console.error("Gagal menarik data", error); }
         }
 
+        // --- FUNGSI CRUD (HAPUS, SIMPAN, EDIT) ---
         async function hapusData(id) {
             if (!confirm("Yakin hapus data ini?")) return;
             const res = await fetch('/api/lembur/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
@@ -265,7 +332,6 @@
             if (res.ok) {
                 document.getElementById('jamLembur').value = '';
                 alert("Data berhasil disimpan!");
-                // Pindah otomatis ke tab history
                 document.querySelector('a[onclick*="history"]').click();
                 muatDataGlobal(); 
             }
@@ -292,13 +358,11 @@
                     jamLembur: parseFloat(document.getElementById('editJam').value)
                 })
             });
-            if (res.ok) {
-                modalEdit.hide(); 
-                muatDataGlobal(); 
-            } else { alert("Gagal memperbarui data."); }
+            if (res.ok) { modalEdit.hide(); muatDataGlobal(); } 
+            else { alert("Gagal memperbarui data."); }
         });
 
-        // 4. Inisialisasi Otomatis Saat Web Dibuka
+        // --- INISIALISASI ---
         window.onload = () => {
             document.getElementById('filterTahun').value = new Date().getFullYear();
             renderTombolBulan();
