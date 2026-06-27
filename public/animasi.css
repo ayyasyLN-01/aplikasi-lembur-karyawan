@@ -1,7 +1,8 @@
 /* --- GAYA TOMBOL DINAMIS (ANTI BOCOR) --- */
 .btn-dinamis {
     display: block;
-    width: 80px; /* <--- Pastikan ada titik koma di sini! */
+    width: 100px; /* <--- Pastikan ada titik koma di sini! */
+    white-space: nowrap;
     margin: 0 auto; /* <--- Pastikan ada titik koma di sini! */
     
     transition: all 0.2s ease-in;
