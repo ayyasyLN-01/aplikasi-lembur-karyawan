@@ -17,7 +17,6 @@
         .section-panel { display: none; }
         .section-panel.active { display: block; }
         
-        /* CSS Responsif untuk HP */
         @media (max-width: 576px) {
             .table td, .table th { font-size: 0.8rem; padding: 5px !important; }
             .btn-sm { padding: 2px 5px; font-size: 0.7rem; }
@@ -62,7 +61,7 @@
         </div>
 
         <div id="dashboard" class="section-panel active">
-            <h3 class="mb-4">Statistik Lembur Bulanan</h3>
+            <h3 class="mb-4">Statistik Lembur</h3>
             <div class="row mb-4">
                 <div class="col-md-4 mb-3">
                     <div class="card bg-primary text-white shadow-sm border-0 h-100">
@@ -83,7 +82,7 @@
             
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body">
-                    <h5 class="card-title text-muted fw-bold mb-3">Grafik Intensitas Lembur</h5>
+                    <h5 class="card-title text-muted fw-bold mb-3">Grafik Pendapatan Lembur Tahunan</h5>
                     <div class="chart-container">
                         <canvas id="grafikLembur"></canvas>
                     </div>
@@ -115,7 +114,13 @@
                 <div class="card-body p-0 table-responsive" style="max-height: 500px;">
                     <table class="table table-hover table-striped mb-0 text-center align-middle">
                         <thead class="table-dark" style="position: sticky; top: 0;">
-                            <tr><th>Tanggal</th><th>Jenis</th><th>Durasi</th><th>Rupiah</th><th>Opsi</th></tr>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Jenis</th>
+                                <th>Jumlah Jam</th>
+                                <th>Total Rupiah</th>
+                                <th>Opsi</th>
+                            </tr>
                         </thead>
                         <tbody id="tabelRiwayat"></tbody>
                     </table>
@@ -166,22 +171,23 @@
             window.location.href = '/login.html';
         }
 
-        // --- SISTEM NAVIGASI SPA & TOGGLE FILTER ---
+        // --- SISTEM NAVIGASI SPA ---
         function pindahMenu(targetId, elemenKlik) {
             document.querySelectorAll('.section-panel').forEach(panel => panel.classList.remove('active'));
             document.getElementById(targetId).classList.add('active');
             document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
             elemenKlik.classList.add('active');
 
-            // Sembunyikan Filter jika masuk ke halaman Input
             const globalFilter = document.getElementById('globalFilter');
             if (targetId === 'input') globalFilter.style.display = 'none';
             else globalFilter.style.display = 'block';
         }
 
-        // --- FILTER BULAN ---
+        // --- MANAJEMEN DATA GLOBAL ---
+        let dataRiwayatTahunan = []; // Menyimpan data 1 tahun penuh
         let bulanAktif = new Date().getMonth() + 1; 
-        const namaBulan = ["Semua", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+        const namaBulanSingkat = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+        const labelTombolBulan = ["Semua", ...namaBulanSingkat];
         
         function renderTombolBulan() {
             const grid = document.getElementById('gridBulan');
@@ -189,58 +195,25 @@
             for (let i = 0; i <= 12; i++) {
                 const btn = document.createElement('button');
                 btn.className = `btn btn-sm fw-bold ${i === bulanAktif ? 'btn-primary' : 'btn-outline-primary'}`;
-                btn.innerText = namaBulan[i];
+                btn.innerText = labelTombolBulan[i];
                 btn.style.margin = '2px';
                 btn.onclick = () => { 
                     bulanAktif = i; 
                     renderTombolBulan(); 
-                    muatDataGlobal(); 
+                    // Update tampilan tanpa perlu tembak API lagi
+                    updateTampilanLokal(); 
                 };
                 grid.appendChild(btn);
             }
         }
 
-        // --- GRAFIK CHART.JS ---
-        let chartInstance = null;
-        function renderGrafik(dataArray) {
-            const ctx = document.getElementById('grafikLembur').getContext('2d');
-            
-            // Balik urutan agar tanggal terkecil ada di kiri grafik
-            const dataReverse = [...dataArray].reverse();
-            
-            const labelTanggal = dataReverse.map(item => new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-            const nilaiJam = dataReverse.map(item => parseFloat(item.jam_lembur));
-
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labelTanggal,
-                    datasets: [{
-                        label: 'Durasi Lembur (Jam)',
-                        data: nilaiJam,
-                        backgroundColor: '#0d6efd',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-        }
-
-        // --- TARIK DATA, TABEL, & RATA-RATA ---
+        // 1. Tarik Data dari Server (Hanya saat halaman dimuat atau Tahun diubah)
         async function muatDataGlobal() {
             try {
                 const tahun = document.getElementById('filterTahun').value;
-                let url = `/api/riwayat-lembur?tahun=${tahun}`;
-                if (bulanAktif !== 0) url += `&bulan=${bulanAktif}`;
-
+                // Kita tidak mengirim parameter bulan, sehingga API mengembalikan 1 tahun penuh
+                const url = `/api/riwayat-lembur?tahun=${tahun}`;
                 const response = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-                const data = await response.json();
 
                 if (!response.ok) {
                     if (response.status === 403 || response.status === 401) {
@@ -250,72 +223,145 @@
                     return;
                 }
 
-                let totalJamWeekday = 0; let totalJamOffday = 0; let totalUang = 0;
-                const tbody = document.getElementById('tabelRiwayat');
-                tbody.innerHTML = '';
-
-                if (!Array.isArray(data) || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted fw-bold">Belum ada data lembur di periode ini.</td></tr>';
-                    renderGrafik([]); // Kosongkan grafik
-                } else {
-                    data.forEach(item => {
-                        if (item.jenis_hari === 'Weekday') totalJamWeekday += parseFloat(item.jam_lembur);
-                        if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
-                        totalUang += parseFloat(item.total_uang_lembur);
-
-                        const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; 
-                        const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
-
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="fw-bold">${formatTgl}</td>
-                            <td><span class="badge ${item.jenis_hari === 'Weekday' ? 'bg-secondary' : 'bg-warning text-dark'}">${item.jenis_hari}</span></td>
-                            <td>${item.jam_lembur}</td>
-                            <td class="text-success fw-bold">${formatRupiah(item.total_uang_lembur)}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary me-1" onclick="bukaModalEdit(${item.id}, '${tgl}', '${item.jenis_hari}', ${item.jam_lembur})">Edit</button>
-                                <button class="btn btn-sm btn-danger" onclick="hapusData(${item.id})">Hapus</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-
-                    // LOGIKA RATA-RATA PRESISI (Hanya memproses set data numerik yang bernilai)
-                    const dataValid = data.filter(item => parseFloat(item.jam_lembur) > 0);
-                    const jumlahData = dataValid.length;
-                    
-                    if (jumlahData > 0) {
-                        const rataJam = (totalJamWeekday + totalJamOffday) / jumlahData;
-                        const rataUang = totalUang / jumlahData;
-                        
-                        const trAvg = document.createElement('tr');
-                        trAvg.className = "table-info fw-bold";
-                        trAvg.innerHTML = `
-                            <td colspan="2" class="text-end">📈 Rata-rata:</td>
-                            <td>${rataJam.toFixed(1)} Jam</td>
-                            <td class="text-success">${formatRupiah(rataUang)}</td>
-                            <td></td>
-                        `;
-                        tbody.appendChild(trAvg);
-                    }
-
-                    // Render Data ke Grafik
-                    renderGrafik(data);
-                }
-
-                // Update Angka di Dashboard
-                document.getElementById('dashWeekday').innerText = totalJamWeekday + " Jam";
-                document.getElementById('dashOffday').innerText = totalJamOffday + " Jam";
-                document.getElementById('dashUang').innerText = formatRupiah(totalUang);
+                dataRiwayatTahunan = await response.json();
+                
+                // Render Grafik Tahunan & Tampilan Tabel
+                renderGrafikTahunan();
+                updateTampilanLokal();
 
             } catch (error) { console.error("Gagal menarik data", error); }
+        }
+
+        // 2. Render Grafik (X = Bulan, Y = Rupiah)
+        let chartInstance = null;
+        function renderGrafikTahunan() {
+            const ctx = document.getElementById('grafikLembur').getContext('2d');
+            
+            // Siapkan wadah kosong untuk 12 bulan
+            let uangPerBulan = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            
+            // Masukkan data rupiah ke dalam bulan yang sesuai
+            if (Array.isArray(dataRiwayatTahunan)) {
+                dataRiwayatTahunan.forEach(item => {
+                    const indeksBulan = new Date(item.tanggal_lembur).getMonth(); // 0 untuk Jan, 11 untuk Des
+                    uangPerBulan[indeksBulan] += parseFloat(item.total_uang_lembur);
+                });
+            }
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: namaBulanSingkat,
+                    datasets: [{
+                        label: 'Total Pendapatan (Rp)',
+                        data: uangPerBulan,
+                        backgroundColor: '#198754', // Warna hijau sukses
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { callback: function(value) { return 'Rp ' + value.toLocaleString('id-ID'); } }
+                        } 
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: { label: function(context) { return 'Rp ' + context.parsed.y.toLocaleString('id-ID'); } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. Render Tabel dan Dasbor Angka Berdasarkan Filter Bulan
+        function updateTampilanLokal() {
+            let totalJamWeekday = 0; let totalJamOffday = 0; let totalUang = 0;
+            const tbody = document.getElementById('tabelRiwayat');
+            tbody.innerHTML = '';
+
+            // Filter data secara lokal menggunakan JavaScript
+            let dataTampil = dataRiwayatTahunan;
+            if (bulanAktif !== 0 && Array.isArray(dataRiwayatTahunan)) {
+                dataTampil = dataRiwayatTahunan.filter(item => {
+                    const bulanItem = new Date(item.tanggal_lembur).getMonth() + 1;
+                    return bulanItem === bulanAktif;
+                });
+            }
+
+            if (!Array.isArray(dataTampil) || dataTampil.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="py-4 text-muted fw-bold">Belum ada data lembur di periode ini.</td></tr>';
+            } else {
+                dataTampil.forEach(item => {
+                    if (item.jenis_hari === 'Weekday') totalJamWeekday += parseFloat(item.jam_lembur);
+                    if (item.jenis_hari === 'Offday') totalJamOffday += parseFloat(item.jam_lembur);
+                    totalUang += parseFloat(item.total_uang_lembur);
+
+                    const tgl = new Date(item.tanggal_lembur).toISOString().split('T')[0]; 
+                    const formatTgl = new Date(item.tanggal_lembur).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="fw-bold">${formatTgl}</td>
+                        <td><span class="badge ${item.jenis_hari === 'Weekday' ? 'bg-secondary' : 'bg-warning text-dark'}">${item.jenis_hari}</span></td>
+                        <td>${item.jam_lembur} Jam</td>
+                        <td class="text-success fw-bold">${formatRupiah(item.total_uang_lembur)}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" onclick="bukaModalEdit(${item.id}, '${tgl}', '${item.jenis_hari}', ${item.jam_lembur})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="hapusData(${item.id})">Hapus</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // --- TAMBAHAN: BARIS TOTAL DAN RATA-RATA ---
+                const totalSemuaJam = totalJamWeekday + totalJamOffday;
+                const jumlahData = dataTampil.filter(item => parseFloat(item.jam_lembur) > 0).length;
+
+                // Baris Total Akumulasi
+                const trTotal = document.createElement('tr');
+                trTotal.className = "table-secondary fw-bold";
+                trTotal.innerHTML = `
+                    <td colspan="2" class="text-end">∑ TOTAL:</td>
+                    <td>${totalSemuaJam} Jam</td>
+                    <td class="text-success">${formatRupiah(totalUang)}</td>
+                    <td></td>
+                `;
+                tbody.appendChild(trTotal);
+                
+                // Baris Rata-rata
+                if (jumlahData > 0) {
+                    const rataJam = totalSemuaJam / jumlahData;
+                    const rataUang = totalUang / jumlahData;
+                    
+                    const trAvg = document.createElement('tr');
+                    trAvg.className = "table-info fw-bold";
+                    trAvg.innerHTML = `
+                        <td colspan="2" class="text-end">📈 RATA-RATA (Per Hari Lembur):</td>
+                        <td>${rataJam.toFixed(1)} Jam</td>
+                        <td class="text-success">${formatRupiah(rataUang)}</td>
+                        <td></td>
+                    `;
+                    tbody.appendChild(trAvg);
+                }
+            }
+
+            // Update Angka di Dashboard (berdasarkan filter bulan aktif)
+            document.getElementById('dashWeekday').innerText = totalJamWeekday + " Jam";
+            document.getElementById('dashOffday').innerText = totalJamOffday + " Jam";
+            document.getElementById('dashUang').innerText = formatRupiah(totalUang);
         }
 
         // --- FUNGSI CRUD (HAPUS, SIMPAN, EDIT) ---
         async function hapusData(id) {
             if (!confirm("Yakin hapus data ini?")) return;
             const res = await fetch('/api/lembur/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
-            if (res.ok) muatDataGlobal();
+            if (res.ok) muatDataGlobal(); // Tarik data ulang untuk memperbarui grafik dan tabel
         }
 
         document.getElementById('formLembur').addEventListener('submit', async function (e) {
@@ -359,15 +405,4 @@
                 })
             });
             if (res.ok) { modalEdit.hide(); muatDataGlobal(); } 
-            else { alert("Gagal memperbarui data."); }
-        });
-
-        // --- INISIALISASI ---
-        window.onload = () => {
-            document.getElementById('filterTahun').value = new Date().getFullYear();
-            renderTombolBulan();
-            muatDataGlobal();
-        };
-    </script>
-</body>
-</html>
+            else {
