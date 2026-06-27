@@ -2,7 +2,7 @@
 .btn-dinamis {
     display: block;
     width: 70%;         /* 👈 1. UBAH LEBAR DI SINI */
-    /* margin: 0 auto; */ /* 👈 (Opsional) Aktifkan ini agar tombol ke tengah jika width dikecilkan */
+    margin: 0 auto; */ /* 👈 (Opsional) Aktifkan ini agar tombol ke tengah jika width dikecilkan
     
     transition: all 0.2s ease-in;
     position: relative !important;
