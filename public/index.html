@@ -293,16 +293,8 @@
                         <td colspan="2" class="text-end">∑ TOTAL:</td>
                         <td>${totalSemuaJam} Jam</td>
                         <td class="text-success">${formatRupiah(totalUang)}</td><td></td>
-                    </tr>`;
-                
-                if (jumlahData > 0) {
-                    tbody.innerHTML += `
-                        <tr class="table-info fw-bold">
-                            <td colspan="2" class="text-end">📈 RATA-RATA:</td>
-                            <td>${(totalSemuaJam / jumlahData).toFixed(1)} Jam</td>
-                            <td class="text-success">${formatRupiah(totalUang / jumlahData)}</td><td></td>
-                        </tr>`;
-                }
+                    </tr>`;  
+              
             }
 
             document.getElementById('dashWeekday').innerText = totalJamWeekday + " Jam";
