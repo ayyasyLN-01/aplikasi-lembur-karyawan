@@ -30,7 +30,7 @@
                             </div>
                         </form>
                         <div class="mt-4 text-center">
-                            <button onclick="window.location.href='/register.html'" class="fw-bold btn btn-success">Buat
+                            <button onclick="event.preventDefault(); document.body.classList.add('page-transition-out'); setTimeout(() => window.location.href='/register.html', 400);" class="fw-bold btn btn-success">Buat
                                 Akun</button>
                         </div>
                     </div>
@@ -64,9 +64,11 @@
 
                     // Sortir arah halaman berdasarkan peran
                     if (data.role === 'admin') {
-                        window.location.href = '/admin.html';
+                        document.body.classList.add('page-transition-out');
+                        setTimeout(() => window.location.href = '/admin.html', 400);
                     } else {
-                        window.location.href = '/index.html';
+                        document.body.classList.add('page-transition-out');
+                        setTimeout(() => window.location.href = '/index.html', 400);
                     }
                 } else {
                     alert(data.pesan);
