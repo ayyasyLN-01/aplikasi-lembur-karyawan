@@ -148,6 +148,24 @@
             window.location.href = '/login.html';
         }
 
+        // --- SISTEM AUTO LOGOUT (10 Menit Inaktivitas) ---
+        let timerInaktivitas;
+        function resetTimerLogout() {
+            clearTimeout(timerInaktivitas);
+            timerInaktivitas = setTimeout(() => {
+                alert("Time Out! Waktu sesi Anda telah habis. Silakan login lagi.");
+                logout();
+            }, 10 * 60 * 1000); // 10 menit
+        }
+
+        // Reset timer saat ada interaksi pengguna
+        window.addEventListener('load', resetTimerLogout);
+        window.addEventListener('mousemove', resetTimerLogout);
+        window.addEventListener('keypress', resetTimerLogout);
+        window.addEventListener('click', resetTimerLogout);
+        window.addEventListener('scroll', resetTimerLogout);
+        window.addEventListener('touchstart', resetTimerLogout);
+
         // 2. SISTEM NAVIGASI AMAN
         function pindahMenu(targetId, elemenKlik) {
             try {
